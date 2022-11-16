@@ -86,7 +86,7 @@ train_history, best_parameters = \
     train(mobilenet, train_loader, loss_func, optimizer,
           EPOCHS, accuracy, val_loader, scheduler)
 
-mobilenet.save_model('model.pkl')
+torch.save(mobilenet.module.state_dict(),'model.pkl')
 '''
 
 times = timeit.repeat(stmt, setup, number = 1, repeat=2, globals=globals())
