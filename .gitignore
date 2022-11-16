@@ -1,2 +1,5 @@
 /data
 /venv
+__pycache__/datafunc.cpython-310.pyc
+__pycache__/functions.cpython-310.pyc
+__pycache__/model.cpython-310.pyc
