@@ -57,8 +57,8 @@ def do_epoch(model, optimizer, loss_func, data_loader, device,
         for ind, (X, y) in enumerate(data_loader, 1):
             X.to(device)
             y.to(device)
-            print("X is at: ", X.get_device())
-            print("y is at: ", y.get_device())
+            for o in X:
+                print("Item is at: ", o.get_device())
             description = ''
             if title is not None:
                 description += title
