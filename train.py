@@ -69,7 +69,7 @@ optimizer = torch.optim.Adam(mobilenet.parameters(),
 
 loss_func = nn.CrossEntropyLoss()
 
-EPOCHS = 10
+EPOCHS = 2
 
 factor = 0.5
 patience = 2
@@ -83,13 +83,15 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 
 stmt = '''
 train_history, best_parameters = \
-    train(mobilenet, train_loader, loss_func, optimizer,
-          EPOCHS, accuracy, val_loader, scheduler)
+for data in train_loader:
+    input = data.to(device)
+    train(mobilenet, input, loss_func, optimizer,
+            EPOCHS, accuracy, val_loader, scheduler)
 
 torch.save(mobilenet.module.state_dict(),'model.pkl')
 '''
 
-times = timeit.repeat(stmt, setup, number = 1, repeat=2, globals=globals())
+times = timeit.repeat(stmt, setup, number = 1, repeat=3, globals=globals())
 
 print('Minimal time is: ', min(times))
 
