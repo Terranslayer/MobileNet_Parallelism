@@ -82,11 +82,11 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     '''
 
 stmt = '''
-train_history, best_parameters = \
 for data in train_loader:
     input = data.to(device)
-    train(mobilenet, input, loss_func, optimizer,
-            EPOCHS, accuracy, val_loader, scheduler)
+    train_history, best_parameters = \
+        train(mobilenet, input, loss_func, optimizer,
+                EPOCHS, accuracy, val_loader, scheduler)
 
 torch.save(mobilenet.module.state_dict(),'model.pkl')
 '''
