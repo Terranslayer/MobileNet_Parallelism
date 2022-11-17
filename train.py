@@ -95,7 +95,7 @@ train_history, best_parameters = \
 torch.save(mobilenet.module.state_dict(),'model.pkl')
 '''
 
-times = timeit.repeat(stmt, setup, number = 1, repeat=2, globals=globals())
+times = timeit.repeat(stmt, setup, number = 1, repeat=1, globals=globals())
 
 print('Minimal time is: ', min(times))
 
