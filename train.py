@@ -52,8 +52,8 @@ DROPOUT = 0.8
 setup = '''
 from functions import train, accuracy
 
-train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True)
-val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
+train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True, collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))
+val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True, collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))
 mobilenet = MobileNetV3()
 mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
 mobilenet = nn.DataParallel(mobilenet)
@@ -82,8 +82,11 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     '''
 
 stmt = '''
+print("Type of train_loader: ", type(train_loader))
 for X, Y in train_loader:
+    print("Type of X, Y: ", type(X), type(Y))
     input = (X.to(device), Y.to(device))
+    print("Type of input: ", type(input))
     train_history, best_parameters = \
         train(mobilenet, input, loss_func, optimizer,
                 EPOCHS, accuracy, val_loader, scheduler)
