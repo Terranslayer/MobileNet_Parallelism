@@ -6,6 +6,7 @@ import torch.nn as nn
 from torchvision import datasets, transforms
 from datafunc import MyDataLoader, train_test_split
 from model import MobileNetV3
+from torch.nn.parallel import DistributedDataParallel as DDP
 import timeit
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -85,7 +86,8 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     '''
 
 stmt = '''
-mobilenet = nn.DataParallel(mobilenet)
+mobilenet = nn.DDP(mobilenet)
+mobilenet.to(device)
 train_history, best_parameters = \
     train(mobilenet, train_loader, loss_func, optimizer, device,
             EPOCHS, accuracy, val_loader, scheduler)
