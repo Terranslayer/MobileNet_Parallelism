@@ -54,8 +54,7 @@ def do_epoch(model, optimizer, loss_func, data_loader,
                 ema.register(name, param.data)
 
     with tqdm(total=len(data_loader)) as progress_bar:
-        for ind, input in enumerate(data_loader, 1):
-            X,y = input
+        for ind, (X, y) in enumerate(data_loader, 1):
             description = ''
             if title is not None:
                 description += title
