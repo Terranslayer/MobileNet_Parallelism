@@ -59,7 +59,7 @@ train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True
 val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
 mobilenet = MobileNetV3()
 mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
-mobilenet = nn.DataParallel(mobilenet)
+# mobilenet = nn.DataParallel(mobilenet)
 mobilenet = mobilenet.to(device)
 LR = 1e-2
 OPTIM_MOMENTUM = 0.9
@@ -85,6 +85,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     '''
 
 stmt = '''
+mobilenet = nn.DataParallel(mobilenet)
 train_history, best_parameters = \
     train(mobilenet, train_loader, loss_func, optimizer, device,
             EPOCHS, accuracy, val_loader, scheduler)
@@ -92,7 +93,7 @@ train_history, best_parameters = \
 torch.save(mobilenet.module.state_dict(),'model.pkl')
 '''
 
-times = timeit.repeat(stmt, setup, number = 1, repeat=3, globals=globals())
+times = timeit.repeat(stmt, setup, number = 1, repeat=2, globals=globals())
 
 print('Minimal time is: ', min(times))
 
