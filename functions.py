@@ -55,10 +55,6 @@ def do_epoch(model, optimizer, loss_func, data_loader, device,
 
     with tqdm(total=len(data_loader)) as progress_bar:
         for ind, (X, y) in enumerate(data_loader, 1):
-            X.to(device)
-            y.to(device)
-            for o in X:
-                print("Item is at: ", o.get_device())
             description = ''
             if title is not None:
                 description += title
