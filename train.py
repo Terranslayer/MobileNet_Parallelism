@@ -9,6 +9,8 @@ from model import MobileNetV3
 import timeit
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.device_count() > 1:
+  print("Let's use", torch.cuda.device_count(), "GPUs!")
 # dataset settings
 batch_size = 256
 IM_SIZE = 224  # resize image
