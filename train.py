@@ -9,6 +9,7 @@ from model import MobileNetV3
 import timeit
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("The device: ", device)
 if torch.cuda.device_count() > 1:
   print("Let's use", torch.cuda.device_count(), "GPUs!")
 # dataset settings
@@ -54,8 +55,8 @@ DROPOUT = 0.8
 setup = '''
 from functions import train, accuracy
 
-train_loader = MyDataLoader(cifar_train, batch_size, device, train_indices, shuffle=True)
-val_loader = MyDataLoader(cifar_val, batch_size, device, val_indices, shuffle=True)
+train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True)
+val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
 mobilenet = MobileNetV3()
 mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
 mobilenet = nn.DataParallel(mobilenet)
@@ -85,7 +86,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 
 stmt = '''
 train_history, best_parameters = \
-    train(mobilenet, train_loader, loss_func, optimizer,
+    train(mobilenet, train_loader, loss_func, optimizer, device,
             EPOCHS, accuracy, val_loader, scheduler)
 
 torch.save(mobilenet.module.state_dict(),'model.pkl')

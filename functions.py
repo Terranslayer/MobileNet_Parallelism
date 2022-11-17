@@ -26,7 +26,7 @@ class EMA(nn.Module):
         return new_average
 
 
-def do_epoch(model, optimizer, loss_func, data_loader,
+def do_epoch(model, optimizer, loss_func, data_loader, device,
              mode='T', metric=None, title=None):
     """
     Compute one epoch
@@ -55,6 +55,8 @@ def do_epoch(model, optimizer, loss_func, data_loader,
 
     with tqdm(total=len(data_loader)) as progress_bar:
         for ind, (X, y) in enumerate(data_loader, 1):
+            X.to(device)
+            y.to(device)
             print("X is at: ", X.get_device())
             print("y is at: ", y.get_device())
             description = ''
@@ -85,7 +87,7 @@ def do_epoch(model, optimizer, loss_func, data_loader,
     return epoch_loss / len(data_loader), epoch_metric / len(data_loader)
 
 
-def train(model, train_loader, loss_func, optimizer, epoch_count=10,
+def train(model, train_loader, loss_func, optimizer, device, epoch_count=10,
           metric=None, val_loader=None, scheduler=None):
     """
     Training model
@@ -122,7 +124,7 @@ def train(model, train_loader, loss_func, optimizer, epoch_count=10,
             title = f'[{epoch+1: 3}/{epoch_count}]|'
             model.train(mode == 'T')
             epoch_loss, epoch_metric = \
-                do_epoch(model, optimizer, loss_func, data,
+                do_epoch(model, optimizer, loss_func, data, device,
                          mode, metric, title)
             history_info[mode + 'loss'].append(epoch_loss)
             history_info[mode + 'metric'].append(epoch_metric)

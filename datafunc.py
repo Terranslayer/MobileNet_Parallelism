@@ -36,7 +36,7 @@ def train_test_split(data, train_size, stratify=None):
 
 
 class MyDataLoader:
-    def __init__(self, data, batch_size, device, indices=None, shuffle=False):
+    def __init__(self, data, batch_size, indices=None, shuffle=False):
         """
         Create batches
         :param data: (iterable)
@@ -45,7 +45,6 @@ class MyDataLoader:
         :param shuffle: (bool) Default None
         """
         self.shuffle = shuffle
-        self.device = device
         self.batch_size = batch_size
         self.data = data
         if indices is None:
@@ -90,7 +89,7 @@ class MyDataLoader:
             end_index = min(self.data_len, start_index + self.batch_size)
             batch_indices = self.indices[start_index: end_index]
             X_batch, y_batch = self.create_batch(batch_indices)
-            yield X_batch.to(self.device), y_batch.to(self.device)
+            yield X_batch, y_batch
 
 
 def load_class_name(path):
