@@ -86,7 +86,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     '''
 
 stmt = '''
-mobilenet = nn.DDP(mobilenet)
+mobilenet = DDP(mobilenet)
 mobilenet.to(device)
 train_history, best_parameters = \
     train(mobilenet, train_loader, loss_func, optimizer, device,
