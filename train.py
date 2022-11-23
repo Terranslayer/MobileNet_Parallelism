@@ -8,6 +8,8 @@ from datafunc import MyDataLoader, train_test_split
 from model import MobileNetV3
 from torch.nn.parallel import DistributedDataParallel as DDP
 import timeit
+import torch.distributed as dist
+import torch.multiprocessing as mp
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("The device: ", device)
@@ -52,52 +54,71 @@ ALPHA = 1.
 ARCHITECTURE = 'small'
 DROPOUT = 0.8
 
-
-setup = '''
 from functions import train, accuracy
 
-train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True)
-val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
-mobilenet = MobileNetV3()
-mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
-# mobilenet = nn.DataParallel(mobilenet)
-mobilenet = mobilenet.to(device)
-LR = 1e-2
-OPTIM_MOMENTUM = 0.9
-WEIGHT_DECAY = 1e-5 
+def setup(rank, world_size):
+    dist.init_process_group('nccl',rank=rank,world_size=world_size)
 
-optimizer = torch.optim.Adam(mobilenet.parameters(),
-                            lr=LR,
-                            weight_decay = WEIGHT_DECAY
-                            )
+def cleanup():
+    dist.destroy_process_group()
 
-loss_func = nn.CrossEntropyLoss()
+def model_init(rank,world_size):
+    setup(rank,world_size)
+    train_loader = MyDataLoader(cifar_train, batch_size, train_indices, shuffle=True)
+    val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
+    mobilenet = MobileNetV3()
+    mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
+    # mobilenet = nn.DataParallel(mobilenet)
+    mobilenet.to(rank)
+    mobilenet = DDP(mobilenet, device_ids=[rank])
+    LR = 1e-2
+    OPTIM_MOMENTUM = 0.9
+    WEIGHT_DECAY = 1e-5
+    # backend = 'nccl'
+    # world_size = 2
+    # processes = []
+    # mp.set_start_method("spawn")
 
-EPOCHS = 2
 
-factor = 0.5
-patience = 2
-threshold = 0.001
+    optimizer = torch.optim.Adam(mobilenet.parameters(),
+                                lr=LR,
+                                weight_decay = WEIGHT_DECAY
+                                )
 
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode='max', factor=factor, patience=patience,
-    verbose=True, threshold=threshold
-)
-    '''
+    loss_func = nn.CrossEntropyLoss()
 
-stmt = '''
-mobilenet = DDP(mobilenet)
-mobilenet.to(device)
-train_history, best_parameters = \
-    train(mobilenet, train_loader, loss_func, optimizer, device,
-            EPOCHS, accuracy, val_loader, scheduler)
+    EPOCHS = 2
 
-torch.save(mobilenet.module.state_dict(),'model.pkl')
-'''
+    factor = 0.5
+    patience = 2
+    threshold = 0.001
 
-times = timeit.repeat(stmt, setup, number = 1, repeat=1, globals=globals())
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='max', factor=factor, patience=patience,
+        verbose=True, threshold=threshold
+    )
 
-print('Minimal time is: ', min(times))
+    train_history, best_parameters = \
+        train(mobilenet, train_loader, loss_func, optimizer, device,
+                EPOCHS, accuracy, val_loader, scheduler)
+
+    torch.save(mobilenet.module.state_dict(),'model.pkl')
+
+    cleanup()
+
+def run(model_init, world_size):
+    mp.spawn(model_init, args=(world_size,), nprocs=world_size, join=True)
+
+if __name__ == "__main__":
+    start = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
+    start.record()
+    run(model_init=model_init, world_size=2)
+    end.record()
+
+    torch.cuda.synchronize()
+    print("Time is: ", start.elapsed_time(end))
+
 
 '''
 new_model = MobileNetV3()
