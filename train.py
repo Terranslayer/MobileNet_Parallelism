@@ -10,9 +10,10 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import timeit
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import socket
+import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print("The device: ", device)
 if torch.cuda.device_count() > 1:
   print("Let's use", torch.cuda.device_count(), "GPUs!")
 # dataset settings
@@ -57,6 +58,13 @@ DROPOUT = 0.8
 from functions import train, accuracy
 
 def setup(rank, world_size):
+    hostname = socket.gethostname()
+    IPAddr = socket.gethostbyname(hostname)
+    sock = socket.socket()
+    sock.bind(('',0))
+    port = sock.getsockname()[1]
+    os.environ['Master_ADDR'] = 'local host'
+    os.environ['Master_PORT'] = '12355'
     dist.init_process_group('nccl',rank=rank,world_size=world_size)
 
 def cleanup():
