@@ -114,6 +114,7 @@ def model_init(rank,world_size):
     cleanup()
 
 def run(model_init, world_size):
+    mp.Queue(1000)
     mp.spawn(model_init, args=(world_size,), nprocs=world_size, join=True)
 
 if __name__ == "__main__":
