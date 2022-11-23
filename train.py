@@ -63,7 +63,7 @@ def setup(rank, world_size):
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
-    init_method = 'tcp://' + str(IPAddr) + ':' + str(port)
+    init_method = 'tcp://' + str(IPAddr) + ':' + '29500'
     dist.init_process_group('nccl', init_method=init_method,rank=rank,world_size=world_size)
 
 def cleanup():
