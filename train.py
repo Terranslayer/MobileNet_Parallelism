@@ -63,9 +63,8 @@ def setup(rank, world_size):
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
-    os.environ['Master_ADDR'] = 'localhost'
-    os.environ['Master_PORT'] = '12355'
-    dist.init_process_group('nccl',rank=rank,world_size=world_size)
+    init_method = 'tcp://' + IPAddr + ':' + port
+    dist.init_process_group('nccl', init_method=init_method,rank=rank,world_size=world_size)
 
 def cleanup():
     dist.destroy_process_group()
