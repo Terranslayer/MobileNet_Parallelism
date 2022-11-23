@@ -63,7 +63,7 @@ def setup(rank, world_size):
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
-    os.environ['Master_ADDR'] = 'local host'
+    os.environ['Master_ADDR'] = 'localhost'
     os.environ['Master_PORT'] = '12355'
     dist.init_process_group('nccl',rank=rank,world_size=world_size)
 
