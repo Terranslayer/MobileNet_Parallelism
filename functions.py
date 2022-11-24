@@ -61,8 +61,8 @@ def do_epoch(model, optimizer, loss_func, data_loader, device,
             description += f'Mode: {mode} |'
             X_tens, y_tens = torch.as_tensor(X, dtype=torch.float, device="cuda:"+str(device)), \
                              torch.as_tensor(y, dtype=torch.long, device="cuda:"+str(device))
-            X_tens=X_tens.cuda(device, non_blocking=True)
-            y_tens=y_tens.cuda(device,non_blocking=True)
+            X_tens=X_tens.cuda("cuda:"+str(device))
+            y_tens=y_tens.cuda("cuda:"+str(device))
             predict = model(X_tens).squeeze(dim=-1)
             loss = loss_func(predict, y_tens)
             epoch_loss += loss.item()
