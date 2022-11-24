@@ -118,7 +118,7 @@ if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
     start.record()
-    run(model_init=model_init, world_size=2)
+    run(model_init=model_init, world_size=1)
     end.record()
 
     torch.cuda.synchronize()
