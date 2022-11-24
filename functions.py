@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class EMA(nn.Module):
@@ -59,8 +59,10 @@ def do_epoch(model, optimizer, loss_func, data_loader, device,
             if title is not None:
                 description += title
             description += f'Mode: {mode} |'
-            X_tens, y_tens = torch.as_tensor(X, dtype=torch.float, device=DEVICE), \
-                             torch.as_tensor(y, dtype=torch.long, device=DEVICE)
+            X_tens, y_tens = torch.as_tensor(X, dtype=torch.float, device="cuda:"+str(device)), \
+                             torch.as_tensor(y, dtype=torch.long, device="cuda:"+str(device))
+            X_tens=X_tens.cuda(device, non_blocking=True)
+            y_tens=y_tens.cuda(device,non_blocking=True)
             predict = model(X_tens).squeeze(dim=-1)
             loss = loss_func(predict, y_tens)
             epoch_loss += loss.item()

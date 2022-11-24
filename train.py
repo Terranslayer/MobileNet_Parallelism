@@ -106,7 +106,7 @@ def model_init(rank,world_size):
     )
 
     train_history, best_parameters = \
-        train(mobilenet, train_loader, loss_func, optimizer, device,
+        train(mobilenet, train_loader, loss_func, optimizer, rank,
                 EPOCHS, accuracy, val_loader, scheduler)
 
     torch.save(mobilenet.module.state_dict(),'model.pkl')
@@ -114,7 +114,6 @@ def model_init(rank,world_size):
     cleanup()
 
 def run(model_init, world_size):
-    mp.Queue(1000)
     mp.spawn(model_init, args=(world_size,), nprocs=world_size, join=True)
 
 if __name__ == "__main__":
