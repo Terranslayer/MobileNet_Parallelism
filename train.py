@@ -72,6 +72,7 @@ from functions import train, validate, save_checkpoint
 
 def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     global best_acc1
+    print("Get here!")
     rank = local_rank * ngpus_per_node + gpu
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
-    if debug:
+    if False:
         #os env test
         import pprint
         env_var = os.environ
