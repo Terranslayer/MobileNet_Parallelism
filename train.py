@@ -168,13 +168,14 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
             data_row = [time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(epoch_start)), epoch_end - epoch_start]
             csv_write.writerow(data_row)
 
-        save_checkpoint(
-            {
-                'epoch': epoch + 1,
-                'arch': 'mobilenet',
-                'state_dict': mobilenet.module.state_dict(),
-                'best_acc1': best_acc1,
-            }, is_best)
+        if rank % ngpus_per_node == 0:
+            save_checkpoint(
+                {
+                    'epoch': epoch + 1,
+                    'arch': 'mobilenet',
+                    'state_dict': mobilenet.module.state_dict(),
+                    'best_acc1': best_acc1,
+                }, is_best)
 
 def adjust_learning_rate(optimizer, epoch, lr):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
@@ -186,7 +187,7 @@ if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
-    if False:
+    if debug:
         #os env test
         import pprint
         env_var = os.environ
@@ -195,7 +196,7 @@ if __name__ == "__main__":
 
     #get slurm parameter
     local_rank = int(os.environ["SLURM_PROCID"])
-    world_size = int(os.environ["SLURM_GPUS"])
+    world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
 
