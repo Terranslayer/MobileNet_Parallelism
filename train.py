@@ -28,7 +28,7 @@ WEIGHT_DECAY = 1e-5
 IM_SIZE = 224  # resize image
 NORMALIZE = ([0.485, 0.456, 0.406],
              [0.229, 0.224, 0.225])
-evaluate = True
+evaluate = False
 
 
 train_transformer = transforms.Compose([
@@ -79,6 +79,7 @@ def cleanup():
     dist.destroy_process_group()
 
 def model_init(rank,nprocs):
+    best_acc1 = .0
     setup(rank,nprocs)
     splited_batch_size = int(batch_size/nprocs) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
