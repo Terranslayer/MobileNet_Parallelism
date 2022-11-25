@@ -203,6 +203,11 @@ if __name__ == "__main__":
     dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
     start.record()
+    if debug:
+        print("local_rank: ", local_rank)
+        print("world size: ", world_size)
+        print("ngpus per node: ", ngpus_per_node)
+        print("job id: ", job_id)
     mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node)
     end.record()
 
