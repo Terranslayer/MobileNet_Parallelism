@@ -61,12 +61,15 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     global best_acc1
     print("Get here!")
     rank = local_rank * ngpus_per_node + gpu
+    '''
+    # TCP init
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
     init_method = 'tcp://' + str(IPAddr) + ':' + '29501'
+    '''
 
     #test code
     if debug:
