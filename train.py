@@ -69,22 +69,16 @@ DROPOUT = 0.8
 
 from functions import train, validate, save_checkpoint
 
-def setup(rank, nprocs):
+def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
+    global best_acc1
+    rank = local_rank * ngpus_per_node + gpu
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
     init_method = 'tcp://' + str(IPAddr) + ':' + '29500'
-    dist.init_process_group('nccl', init_method=init_method,rank=rank,world_size=nprocs)
-
-def cleanup():
-    dist.destroy_process_group()
-
-def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
-    global best_acc1
-    rank = local_rank * ngpus_per_node + gpu
-    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size)
+    dist.init_process_group(backend='nccl', init_method=init_method,rank=rank,world_size=world_size)
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
@@ -169,8 +163,6 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
                 'state_dict': mobilenet.module.state_dict(),
                 'best_acc1': best_acc1,
             }, is_best)
-
-    cleanup()
 
 def adjust_learning_rate(optimizer, epoch, lr):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
