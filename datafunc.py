@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision import datasets
+from torch.utils.data import Dataset
 
 
 def train_test_split(data, train_size, stratify=None):
@@ -117,6 +118,20 @@ def create_test_dataset(data_folder):
         img.save(data_folder + str(i) +
                  '_' + dataset.classes[label] + '.jpg')
 
+
+class DatasetFromSubset(Dataset):
+    def __init__(self, subset, transform=None):
+        self.subset = subset
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x, y = self.subset[index]
+        if self.transform:
+            x = self.transform(x)
+        return x, y
+
+    def __len__(self):
+        return len(self.subset)
 
 class Dataset:
     def __init__(self, data_folder, transform):
