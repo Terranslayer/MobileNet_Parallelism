@@ -182,6 +182,12 @@ if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
+    #os env test
+    import pprint
+    env_var = os.environ
+    print("User's Environment variable:")
+    pprint.pprint(dict(env_var), width = 1)
+
     #get slurm parameter
     local_rank = int(os.environ["SLURM_PROCID"])
     world_size = int(os.environ["SLURM_NPROCS"])
