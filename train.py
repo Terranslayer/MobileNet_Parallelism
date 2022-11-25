@@ -129,7 +129,7 @@ def model_init(rank,nprocs):
     '''
 
     if evaluate == True:
-        validate(val_loader, mobilenet,loss_func, optimizer, EPOCHS, rank, nprocs, print_freq)
+        validate(val_loader, mobilenet,loss_func, rank, nprocs, print_freq)
 
     for epoch in range(start_epoch, EPOCHS):
         train_sampler.set_epoch(epoch) # ensure shuffle in every epoch
