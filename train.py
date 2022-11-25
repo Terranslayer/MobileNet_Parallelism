@@ -90,7 +90,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         print("world size: ", world_size)
         print("dist url: ", dist_url)
 
-    dist.init_process_group(backend='nccl', init_method=init_method,rank=rank,world_size=world_size)
+    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size)
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     job_id = os.environ["SLURM_JOBID"]
 
     #create dist train file
-    dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
+    dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
     start.record()
     mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size,), nprocs=ngpus_per_node)

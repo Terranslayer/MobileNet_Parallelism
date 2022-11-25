@@ -176,6 +176,8 @@ def train(train_loader, model, criterion, optimizer, epoch, gpu, print_freq):
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        dist.barrier()
+
         losses.update(loss.item(), images.size(0))
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
@@ -214,6 +216,7 @@ def validate(val_loader, model, criterion, gpu, print_freq):
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            dist.barrier()
             losses.update(loss.item(), images.size(0))
             top1.update(acc1[0], images.size(0))
             top5.update(acc5[0], images.size(0))
