@@ -139,7 +139,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     '''
 
     if evaluate == True:
-        validate(val_loader, mobilenet,loss_func, gpu, print_freq)
+        validate(val_loader, mobilenet,loss_func, gpu, ngpus_per_node, print_freq)
 
     log_csv = "distributed_csv"
 
@@ -152,7 +152,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         adjust_learning_rate(optimizer, epoch, LR)
 
         #train for one epoch
-        train(train_loader, mobilenet, loss_func, optimizer, epoch, gpu, print_freq)
+        train(train_loader, mobilenet, loss_func, optimizer, epoch, gpu, ngpus_per_node, print_freq)
 
         #evaluate on validation set
         acc1 = validate(val_loader, mobilenet, loss_func, gpu, print_freq)

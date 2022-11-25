@@ -150,7 +150,7 @@ def reduce_mean(tensor, nprocs):
     rt /= nprocs # this average is necessary!
     return rt
 
-def train(train_loader, model, criterion, optimizer, epoch, gpu, print_freq):
+def train(train_loader, model, criterion, optimizer, epoch, gpu, ngpus_per_node, print_freq):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -175,12 +175,16 @@ def train(train_loader, model, criterion, optimizer, epoch, gpu, print_freq):
         loss = criterion(output, target)
 
         # measure accuracy and record loss
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        acc1, acc5 = accuracy(output, target, gpu, topk=(1, 5))
         dist.barrier()
 
-        losses.update(loss.item(), images.size(0))
-        top1.update(acc1[0], images.size(0))
-        top5.update(acc5[0], images.size(0))
+        reduced_loss = reduce_mean(loss, ngpus_per_node)
+        reduced_acc1 = reduce_mean(acc1, ngpus_per_node)
+        reduced_acc5 = reduce_mean(acc5, ngpus_per_node)
+
+        losses.update(reduced_loss.item(), images.size(0))
+        top1.update(reduced_acc1.item(), images.size(0))
+        top5.update(reduced_acc5.item(), images.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -194,7 +198,7 @@ def train(train_loader, model, criterion, optimizer, epoch, gpu, print_freq):
         if i % print_freq == 0:
             progress.display(i)
 
-def validate(val_loader, model, criterion, gpu, print_freq):
+def validate(val_loader, model, criterion, gpu, ngpus_per_node, print_freq):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -215,11 +219,16 @@ def validate(val_loader, model, criterion, gpu, print_freq):
             loss = criterion(output, target)
 
             # measure accuracy and record loss
-            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            acc1, acc5 = accuracy(output, target, gpu, topk=(1, 5))
             dist.barrier()
-            losses.update(loss.item(), images.size(0))
-            top1.update(acc1[0], images.size(0))
-            top5.update(acc5[0], images.size(0))
+
+            reduced_loss = reduce_mean(loss, ngpus_per_node)
+            reduced_acc1 = reduce_mean(acc1, ngpus_per_node)
+            reduced_acc5 = reduce_mean(acc5, ngpus_per_node)
+
+            losses.update(reduced_loss.item(), images.size(0))
+            top1.update(reduced_acc1.item(), images.size(0))
+            top5.update(reduced_acc5.item(), images.size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -280,20 +289,15 @@ class ProgressMeter(object):
         fmt = '{:' + str(num_digits) + 'd}'
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
-def accuracy(output, target, topk=(1, )):
+def accuracy(output, target, local_rank, topk=(1, )):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
-        maxk = max(topk)
-        batch_size = target.size(0)
-
-        _, pred = output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
-
+        predy = torch.max(output, 1)[1].data.squeeze()
+        acc = (predy == target).sum().item()/float(target.size(0))
+        acc = torch.tensor(acc).cuda(local_rank)
         res = []
-        for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(100.0 / batch_size))
+        res.append(acc)
+        res.append(acc)
         return res
 
 '''
