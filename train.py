@@ -79,7 +79,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     sock = socket.socket()
     sock.bind(('',0))
     port = sock.getsockname()[1]
-    init_method = 'tcp://' + str(IPAddr) + ':' + '29500'
+    init_method = 'tcp://' + str(IPAddr) + ':' + '29501'
 
     #test code
     if debug:
