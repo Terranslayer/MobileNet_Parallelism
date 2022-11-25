@@ -155,7 +155,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         train(train_loader, mobilenet, loss_func, optimizer, epoch, gpu, ngpus_per_node, print_freq)
 
         #evaluate on validation set
-        acc1 = validate(val_loader, mobilenet, loss_func, gpu, print_freq)
+        acc1 = validate(val_loader, mobilenet, loss_func, gpu,ngpus_per_node, print_freq)
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
