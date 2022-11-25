@@ -203,7 +203,7 @@ if __name__ == "__main__":
     dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
     start.record()
-    mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size,), nprocs=ngpus_per_node)
+    mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node)
     end.record()
 
     torch.cuda.synchronize()
