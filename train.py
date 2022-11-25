@@ -24,6 +24,7 @@ print_freq = 10
 EPOCHS = 2
 start_epoch = 0
 LR = 1e-2
+debug = True
 OPTIM_MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-5
 dist_file = "dist_file"
@@ -78,6 +79,16 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     sock.bind(('',0))
     port = sock.getsockname()[1]
     init_method = 'tcp://' + str(IPAddr) + ':' + '29500'
+
+    #test code
+    if debug:
+        print("GPU: ", gpu)
+        print("Ngpus_per_node: ", ngpus_per_node)
+        print("local rank: ", local_rank)
+        print("rank: ", rank)
+        print("world size: ", world_size)
+        print("dist url: ", dist_url)
+
     dist.init_process_group(backend='nccl', init_method=init_method,rank=rank,world_size=world_size)
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
@@ -174,13 +185,12 @@ if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
-    '''
-    #os env test
-    import pprint
-    env_var = os.environ
-    print("User's Environment variable:")
-    pprint.pprint(dict(env_var), width = 1)
-    '''
+    if debug:
+        #os env test
+        import pprint
+        env_var = os.environ
+        print("User's Environment variable:")
+        pprint.pprint(dict(env_var), width = 1)
 
     #get slurm parameter
     local_rank = int(os.environ["SLURM_PROCID"])
