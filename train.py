@@ -203,6 +203,8 @@ if __name__ == "__main__":
     #create dist train file
     dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
+    print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
+
     start.record()
     if debug:
         print("local_rank: ", local_rank)
