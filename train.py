@@ -17,13 +17,13 @@ from torch.utils.data import random_split
 # dataset settings
 batch_size = 256
 print_freq = 10
-EPOCHS = 2
+EPOCHS = 4
 start_epoch = 0
 LR = 1e-2
-debug = True
+debug = True # print some parameters when it's on
 OPTIM_MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-5
-dist_file = "dist_file"
+dist_file = "dist_file" #file name of init_method of init_process_group
 best_acc1 = .0
 IM_SIZE = 224  # resize image
 NORMALIZE = ([0.485, 0.456, 0.406],
