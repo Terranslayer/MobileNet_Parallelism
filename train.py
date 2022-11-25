@@ -103,6 +103,8 @@ def model_init(rank,world_size):
         verbose=True, threshold=threshold
     )
 
+    print(f"Running DDP on rank: {rank}")
+
     train_history, best_parameters = \
         train(mobilenet, train_loader, loss_func, optimizer, rank,
                 EPOCHS, accuracy, val_loader, scheduler)
