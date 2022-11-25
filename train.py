@@ -53,15 +53,6 @@ test_transformer = transforms.Compose([
 cifar = datasets.CIFAR100('data/',
                              download=True)
 
-'''
-cifar_val = datasets.CIFAR100('data/',
-                               transform=test_transformer,
-                               train=False)
-
-train_indices, val_indices = \
-    train_test_split(np.arange(len(cifar_train)), .75, cifar_train.targets)
-    '''
-
 # model parameters
 CLASSES_COUNT = len(cifar.classes)
 ALPHA = 1.
@@ -127,17 +118,6 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
 
     loss_func = nn.CrossEntropyLoss().cuda(gpu)
 
-    '''
-    factor = 0.5
-    patience = 2
-    threshold = 0.001
-
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='max', factor=factor, patience=patience,
-        verbose=True, threshold=threshold
-    )
-    '''
-
     if evaluate == True:
         validate(val_loader, mobilenet,loss_func, gpu, ngpus_per_node, print_freq)
 
@@ -184,8 +164,8 @@ def adjust_learning_rate(optimizer, epoch, lr):
         param_group['lr'] = lr
 
 if __name__ == "__main__":
-    start = torch.cuda.Event(enable_timing=True)
-    end = torch.cuda.Event(enable_timing=True)
+    # start = torch.cuda.Event(enable_timing=True)
+    # end = torch.cuda.Event(enable_timing=True)
 
     if debug:
         #os env test
@@ -205,38 +185,14 @@ if __name__ == "__main__":
 
     print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
 
-    start.record()
+    # start.record()
     if debug:
         print("local_rank: ", local_rank)
         print("world size: ", world_size)
         print("ngpus per node: ", ngpus_per_node)
         print("job id: ", job_id)
     mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node)
-    end.record()
+    # end.record()
 
-    torch.cuda.synchronize()
-    print("Total Time is: ", start.elapsed_time(end))
-
-
-'''
-new_model = MobileNetV3()
-new_model.load_model('model.pkl')
-new_model = new_model.to(device)
-
-optimizer = torch.optim.Adam(new_model.parameters(),
-                            lr=LR,
-                            weight_decay = WEIGHT_DECAY
-                            )
-
-loss_func = nn.CrossEntropyLoss()
-
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode='max', factor=factor, patience=patience,
-    verbose=True, threshold=threshold
-)
-
-EPOCHS = 1
-train_history, best_parameters = \
-    train(new_model, train_loader, loss_func, optimizer,
-          EPOCHS, accuracy, val_loader, scheduler)
-'''
+    # torch.cuda.synchronize()
+    # print("Total Time is: ", start.elapsed_time(end))
