@@ -1,6 +1,3 @@
-from importlib import reload
-
-import numpy as np
 import csv
 import torch
 import time
@@ -9,7 +6,6 @@ from torchvision import datasets, transforms
 from datafunc import DatasetFromSubset
 from model import MobileNetV3
 from torch.nn.parallel import DistributedDataParallel as DDP
-import random
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import socket
