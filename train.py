@@ -1,7 +1,9 @@
 from importlib import reload
 
 import numpy as np
+import csv
 import torch
+import time
 import torch.nn as nn
 from torchvision import datasets, transforms
 from datafunc import DatasetFromSubset
@@ -16,7 +18,6 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # dataset settings
 batch_size = 256
 print_freq = 10
@@ -25,6 +26,8 @@ start_epoch = 0
 LR = 1e-2
 OPTIM_MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-5
+dist_file = "dist_file"
+best_acc1 = .0
 IM_SIZE = 224  # resize image
 NORMALIZE = ([0.485, 0.456, 0.406],
              [0.229, 0.224, 0.225])
@@ -78,10 +81,12 @@ def setup(rank, nprocs):
 def cleanup():
     dist.destroy_process_group()
 
-def model_init(rank,nprocs):
-    best_acc1 = .0
-    setup(rank,nprocs)
-    splited_batch_size = int(batch_size/nprocs) #seperate batch size according to N of processors
+def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
+    global best_acc1
+    rank = local_rank * ngpus_per_node + gpu
+    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size)
+    # setup(rank,nprocs)
+    splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
     # apply corespond transformer to train & test dataset, apply sampler, create dataloder
     train_dataset = DatasetFromSubset(train_subset, transform=train_transformer)
@@ -90,6 +95,7 @@ def model_init(rank,nprocs):
     val_sampler = DistributedSampler(val_dataset)
     train_loader = DataLoader(train_dataset,
     batch_size=splited_batch_size,
+    shuffle=(train_sampler is None),
     num_workers=2,
     pin_memory=True,
     sampler=train_sampler
@@ -100,15 +106,12 @@ def model_init(rank,nprocs):
     pin_memory=True,
     sampler=val_sampler)
 
-    # train_loader = MyDataLoader(cifar_train, splited_batch_size, train_indices, shuffle=True)
-    # val_loader = MyDataLoader(cifar_val, batch_size, val_indices, shuffle=True)
-
 
     mobilenet = MobileNetV3()
     mobilenet.create_model(classes_count=CLASSES_COUNT, architecture=ARCHITECTURE,alpha=ALPHA, dropout=DROPOUT)
-    torch.cuda.set_device(rank)
-    mobilenet.cuda(rank)
-    mobilenet = DDP(mobilenet, device_ids=[rank])
+    torch.cuda.set_device(gpu)
+    mobilenet.cuda(gpu)
+    mobilenet = DDP(mobilenet, device_ids=[gpu])
 
 
     optimizer = torch.optim.Adam(mobilenet.parameters(),
@@ -116,7 +119,7 @@ def model_init(rank,nprocs):
                                 weight_decay = WEIGHT_DECAY
                                 )
 
-    loss_func = nn.CrossEntropyLoss().cuda(rank)
+    loss_func = nn.CrossEntropyLoss().cuda(gpu)
 
     '''
     factor = 0.5
@@ -130,32 +133,42 @@ def model_init(rank,nprocs):
     '''
 
     if evaluate == True:
-        validate(val_loader, mobilenet,loss_func, rank, nprocs, print_freq)
+        validate(val_loader, mobilenet,loss_func, gpu, print_freq)
+
+    log_csv = "distributed_csv"
 
     for epoch in range(start_epoch, EPOCHS):
+        epoch_start = time.time()
+
         train_sampler.set_epoch(epoch) # ensure shuffle in every epoch
         val_sampler.set_epoch(epoch)
 
         adjust_learning_rate(optimizer, epoch, LR)
 
         #train for one epoch
-        train(train_loader, mobilenet, loss_func, optimizer, epoch, rank, nprocs, print_freq)
+        train(train_loader, mobilenet, loss_func, optimizer, epoch, gpu, print_freq)
 
         #evaluate on validation set
-        acc1 = validate(val_loader, mobilenet, loss_func, rank, nprocs, print_freq)
+        acc1 = validate(val_loader, mobilenet, loss_func, gpu, print_freq)
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
 
-        if rank == 0:
-            save_checkpoint(
-                {
-                    'epoch': epoch + 1,
-                    'arch': 'mobilenet',
-                    'state_dict': mobilenet.module.state_dict(),
-                    'best_acc1': best_acc1,
-                }, is_best)
+        epoch_end = time.time()
+
+        with open(log_csv, 'a+') as f:
+            csv_write = csv.writer(f)
+            data_row = [time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(epoch_start)), epoch_end - epoch_start]
+            csv_write.writerow(data_row)
+
+        save_checkpoint(
+            {
+                'epoch': epoch + 1,
+                'arch': 'mobilenet',
+                'state_dict': mobilenet.module.state_dict(),
+                'best_acc1': best_acc1,
+            }, is_best)
 
     cleanup()
 
@@ -165,15 +178,21 @@ def adjust_learning_rate(optimizer, epoch, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-def run(model_init, nprocs):
-    mp.spawn(model_init, args=(nprocs,), nprocs=nprocs)
-
 if __name__ == "__main__":
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
-    nprocs = torch.cuda.device_count() # get gpu number
+
+    #get slurm parameter
+    local_rank = int(os.environ["SLURM_PROCID"])
+    world_size = int(os.environ["SLURM_NPROCS"])
+    ngpus_per_node = torch.cuda.device_count()
+    job_id = os.environ["SLURM_JOBID"]
+
+    #create dist train file
+    dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
+
     start.record()
-    run(model_init=model_init, nprocs=nprocs)
+    mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size,), nprocs=ngpus_per_node)
     end.record()
 
     torch.cuda.synchronize()
