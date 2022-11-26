@@ -57,6 +57,15 @@ DROPOUT = 0.8
 
 from functions import train, validate, save_checkpoint
 
+def find_free_port():
+    import socket
+    from contextlib import closing
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
+
 def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     global best_acc1
     print("Get here!")
@@ -70,8 +79,12 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     port = sock.getsockname()[1]
     init_method = 'tcp://' + str(IPAddr) + ':' + '29501'
     '''
-    IPAddr = socket.gethostbyname('classt09')
-    init_method = 'tcp://' + str(IPAddr) + ':' + '29500'
+    hostname = socket.gethostname()
+    IPAddr = socket.gethostbyname(hostname)
+    port = find_free_port()
+    os.environ['MASTER_ADDR'] = IPAddr
+    os.environ['MASTER_PORT'] = port
+    print(f"{IPAddr=} {port=}")
 
     #test code
     if debug:
@@ -83,7 +96,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         print("dist url: ", dist_url)
 
     print("Can get here!!!")
-    dist.init_process_group(backend='nccl', init_method=init_method,rank=rank,world_size=world_size)
+    dist.init_process_group(backend='nccl',rank=rank,world_size=world_size)
     print("But cannot get here???")
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
