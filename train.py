@@ -194,7 +194,7 @@ if __name__ == "__main__":
         print("world size: ", world_size)
         print("ngpus per node: ", ngpus_per_node)
         print("job id: ", job_id)
-    mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=world_size,join=True)
+    mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node,join=True)
     # end.record()
 
     # torch.cuda.synchronize()
