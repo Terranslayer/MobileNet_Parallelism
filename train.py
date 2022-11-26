@@ -20,7 +20,7 @@ print_freq = 10
 EPOCHS = 4
 start_epoch = 0
 LR = 1e-2
-debug = True # print some parameters when it's on
+debug = False # print some parameters when it's on
 OPTIM_MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-5
 dist_file = "dist_file" #file name of init_method of init_process_group
@@ -57,18 +57,9 @@ DROPOUT = 0.8
 
 from functions import train, validate, save_checkpoint
 
-def find_free_port():
-    import socket
-    from contextlib import closing
-
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return str(s.getsockname()[1])
-
 def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     global best_acc1
-    print("Get here!")
+    # print("Get here!")
     rank = local_rank * ngpus_per_node + gpu
     '''
     # TCP init
@@ -89,9 +80,9 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         print("world size: ", world_size)
         print("dist url: ", dist_url)
 
-    print("Can get here!!!")
+    # print("Can get here!!!")
     dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size)
-    print("But cannot get here???")
+    # print("But cannot get here???")
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
@@ -174,8 +165,8 @@ def adjust_learning_rate(optimizer, epoch, lr):
         param_group['lr'] = lr
 
 if __name__ == "__main__":
-    # start = torch.cuda.Event(enable_timing=True)
-    # end = torch.cuda.Event(enable_timing=True)
+    start = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
 
     if debug:
         #os env test
@@ -193,21 +184,18 @@ if __name__ == "__main__":
     #create dist train file
     dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
-    print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
+    if debug:
+        print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
 
-    # start.record()
+    start.record()
     if debug:
         print("local_rank: ", local_rank)
         print("world size: ", world_size)
         print("ngpus per node: ", ngpus_per_node)
         print("job id: ", job_id)
     context = mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node,join=False)
-    pid = context.pids()
-    queue = context.error_queues
-    print("PIDS: ", pid)
-    print("Errors: ", queue)
     context.join(10)
-    # end.record()
+    end.record()
 
-    # torch.cuda.synchronize()
-    # print("Total Time is: ", start.elapsed_time(end))
+    torch.cuda.synchronize()
+    print("Total Time is: ", start.elapsed_time(end))
