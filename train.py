@@ -94,13 +94,13 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     train_loader = DataLoader(train_dataset,
     batch_size=splited_batch_size,
     shuffle=(train_sampler is None),
-    num_workers=2,
+    num_workers=1,
     pin_memory=True,
     sampler=train_sampler
     )
     val_loader = DataLoader(val_dataset,
     batch_size=splited_batch_size,
-    num_workers=2,
+    num_workers=1,
     pin_memory=True,
     sampler=val_sampler)
 
