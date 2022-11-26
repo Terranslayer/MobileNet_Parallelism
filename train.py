@@ -71,7 +71,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     init_method = 'tcp://' + str(IPAddr) + ':' + '29501'
     '''
     IPAddr = socket.gethostbyname('classt09')
-    init_method = 'tcp://' + str(IPAddr) + ':' + '29501'
+    init_method = 'tcp://' + str(IPAddr) + ':' + '29507'
 
     #test code
     if debug:
