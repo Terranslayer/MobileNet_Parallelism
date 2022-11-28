@@ -57,10 +57,10 @@ DROPOUT = 0.8
 
 from functions import train, validate, save_checkpoint
 
-def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
+def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    rank = local_rank * ngpus_per_node
+    rank = rank*ngpus_per_node + gpu
 
     '''
     # TCP init
@@ -77,7 +77,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         print("Inside Model Init:")
         print("GPU: ", gpu)
         print("Ngpus_per_node: ", ngpus_per_node)
-        print("local rank: ", local_rank)
+        #print("local rank: ", local_rank)
         print("rank: ", rank)
         #print("world size: ", world_size)
         #print("dist url: ", dist_url)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         pprint.pprint(dict(env_var), width = 1)
 
     #get slurm parameter
-    local_rank = int(os.environ["SLURM_PROCID"])
+    rank = int(os.environ["SLURM_PROCID"])
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
@@ -191,13 +191,13 @@ if __name__ == "__main__":
     dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
 
     if debug:
-        print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
+        print("dist-url:{} at PROCID {} / {}".format(dist_url, rank, world_size))
 
     if debug:
         print("In local machine, before spawn():")
-        print("local_rank: ", local_rank)
+        print("local_rank: ", rank)
         #print("world size: ", world_size)
         #print("ngpus per node: ", ngpus_per_node)
         print("job id: ", job_id)
-    context = mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node,join=False)
+    context = mp.spawn(model_init, args=(ngpus_per_node,rank,dist_url,world_size), nprocs=ngpus_per_node,join=False)
     context.join(10)
