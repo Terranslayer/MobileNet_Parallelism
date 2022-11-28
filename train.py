@@ -182,7 +182,7 @@ if __name__ == "__main__":
         pprint.pprint(dict(env_var), width = 1)
 
     #get slurm parameter
-    local_rank = int(os.environ["SLURM_PROCSID"])
+    local_rank = int(os.environ["SLURM_PROCID"])
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
