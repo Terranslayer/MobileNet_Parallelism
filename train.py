@@ -73,12 +73,13 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
 
     #test code
     if debug:
+        print("Inside Model Init:")
         print("GPU: ", gpu)
         print("Ngpus_per_node: ", ngpus_per_node)
         print("local rank: ", local_rank)
         print("rank: ", rank)
-        print("world size: ", world_size)
-        print("dist url: ", dist_url)
+        #print("world size: ", world_size)
+        #print("dist url: ", dist_url)
 
     # print("Can get here!!!")
     dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size)
@@ -123,6 +124,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
         validate(val_loader, mobilenet,loss_func, gpu, ngpus_per_node, print_freq)
 
     log_csv = "distributed_csv"
+    start = time.time()
 
     for epoch in range(start_epoch, EPOCHS):
         epoch_start = time.time()
@@ -158,6 +160,11 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
                     'best_acc1': best_acc1,
                 }, is_best)
 
+    end = time.time()
+    t_time = end - start
+    print("The Elapsed Time is: ", t_time)
+    dist.destroy_process_group()
+
 def adjust_learning_rate(optimizer, epoch, lr):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     lr = LR * (0.1**(epoch // 30))
@@ -165,10 +172,8 @@ def adjust_learning_rate(optimizer, epoch, lr):
         param_group['lr'] = lr
 
 if __name__ == "__main__":
-    start = torch.cuda.Event(enable_timing=True)
-    end = torch.cuda.Event(enable_timing=True)
 
-    if debug:
+    if False:
         #os env test
         import pprint
         env_var = os.environ
@@ -187,15 +192,11 @@ if __name__ == "__main__":
     if debug:
         print("dist-url:{} at PROCID {} / {}".format(dist_url, local_rank, world_size))
 
-    start.record()
     if debug:
+        print("In local machine, before spawn():")
         print("local_rank: ", local_rank)
-        print("world size: ", world_size)
-        print("ngpus per node: ", ngpus_per_node)
+        #print("world size: ", world_size)
+        #print("ngpus per node: ", ngpus_per_node)
         print("job id: ", job_id)
     context = mp.spawn(model_init, args=(ngpus_per_node,local_rank,dist_url,world_size), nprocs=ngpus_per_node,join=False)
     context.join(10)
-    end.record()
-
-    torch.cuda.synchronize()
-    print("Total Time is: ", start.elapsed_time(end))
