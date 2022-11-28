@@ -164,7 +164,7 @@ def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     end = time.time()
     t_time = end - start
     print("The Elapsed Time is: ", t_time)
-    dist.destroy_process_group()
+    #dist.destroy_process_group()
 
 def adjust_learning_rate(optimizer, epoch, lr):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
