@@ -60,8 +60,8 @@ from functions import train, validate, save_checkpoint
 def model_init(gpu,ngpus_per_node,local_rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    #rank = local_rank * ngpus_per_node + gpu
-    rank = gpu
+    rank = local_rank * ngpus_per_node + gpu
+
     '''
     # TCP init
     hostname = socket.gethostname()
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         pprint.pprint(dict(env_var), width = 1)
 
     #get slurm parameter
-    local_rank = int(os.environ["SLURM_PROCID"])
+    local_rank = int(os.environ["SLURM_NODEID"])
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
