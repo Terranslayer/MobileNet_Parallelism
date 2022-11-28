@@ -174,7 +174,7 @@ def adjust_learning_rate(optimizer, epoch, lr):
 
 if __name__ == "__main__":
 
-    if False:
+    if debug:
         #os env test
         import pprint
         env_var = os.environ
