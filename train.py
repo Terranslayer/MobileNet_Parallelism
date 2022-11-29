@@ -8,7 +8,8 @@ from model import MobileNetV3
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 import torch.multiprocessing as mp
-import socket
+import numpy as np
+import random
 import os
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
@@ -61,7 +62,8 @@ from functions import train, validate, save_checkpoint
 def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    rank = rank*ngpus_per_node + gpu
+    gpu = rank%torch.cuda.device_count()
+    #rank = rank*ngpus_per_node + gpu
 
     '''
     # TCP init
@@ -131,6 +133,8 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
 
     for epoch in range(start_epoch, EPOCHS):
         epoch_start = time.time()
+        np.random.seed(epoch)
+        random.seed(epoch)
 
         train_sampler.set_epoch(epoch) # ensure shuffle in every epoch
         val_sampler.set_epoch(epoch)
