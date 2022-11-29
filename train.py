@@ -188,7 +188,7 @@ if __name__ == "__main__":
     job_id = os.environ["SLURM_JOBID"]
 
     #create dist train file
-    dist_url = "file://///{}.{}".format(os.path.realpath(dist_file), job_id)
+    dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
 
     if debug:
         print("dist-url:{} at PROCID {} / {}".format(dist_url, rank, world_size))
