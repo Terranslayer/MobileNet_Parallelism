@@ -132,7 +132,7 @@ class DatasetFromSubset(Dataset):
 
     def __len__(self):
         return len(self.subset)
-'''
+
 class Dataset:
     def __init__(self, data_folder, transform):
         """
@@ -164,4 +164,3 @@ class Dataset:
         x = self.transform(x)
         y = self.file_names[index]
         return x, y
-        '''
