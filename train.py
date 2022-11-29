@@ -22,7 +22,7 @@ print_freq = 10
 EPOCHS = 4
 start_epoch = 0
 LR = 1e-2
-debug = True # print some parameters when it's on
+debug = False # print some parameters when it's on
 OPTIM_MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-5
 dist_file = "dist_file" #file name of init_method of init_process_group
@@ -85,9 +85,9 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
         #print("world size: ", world_size)
         #print("dist url: ", dist_url)
 
-    print("Can get here!!!")
+    # print("Can get here!!!")
     dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
-    print("But cannot get here???")
+    # print("But cannot get here???")
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
     # apply corespond transformer to train & test dataset, apply sampler, create dataloder
