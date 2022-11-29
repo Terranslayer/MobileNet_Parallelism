@@ -86,7 +86,7 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
         #print("dist url: ", dist_url)
 
     print("Can get here!!!")
-    dist.init_process_group(backend='mpi', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
+    dist.init_process_group(backend='gloo', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
     print("But cannot get here???")
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
