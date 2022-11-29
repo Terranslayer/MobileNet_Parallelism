@@ -62,7 +62,6 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
     rank = rank
-    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
 
     '''
     # TCP init
@@ -77,10 +76,11 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     #test code
     if debug:
         print("Inside Model Init:")
-        print("GPU: ", gpu)
-        print("Ngpus_per_node: ", ngpus_per_node)
+        print("   GPU: ", gpu)
+        print("   Ngpus_per_node: ", ngpus_per_node)
         #print("local rank: ", local_rank)
-        print("rank: ", rank)
+        print("   ProcessID: ", rank)
+        print("   Current NodeID:",os.environ['SLURM_NODEID'])
         #print("world size: ", world_size)
         #print("dist url: ", dist_url)
 
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
-    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
+    os.environ["NCCL_BLOCKING_WAIT"] = "1"
 
     #create dist train file
     dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
