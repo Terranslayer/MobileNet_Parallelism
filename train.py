@@ -82,7 +82,7 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
         print("   Ngpus_per_node: ", ngpus_per_node)
         #print("local rank: ", local_rank)
         print("   Rank: ", rank)
-        print("   Current NodeID: ",os.environ['SLURM_NODEID'] + ", " + world_rank)
+        print("   Current NodeID: ",world_rank)
         #print("world size: ", world_size)
         #print("dist url: ", dist_url)
 
