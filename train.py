@@ -60,7 +60,7 @@ from functions import train, validate, save_checkpoint
 def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    rank = rank*ngpus_per_node + gpu
+    rank = rank
 
     '''
     # TCP init
