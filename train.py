@@ -63,7 +63,7 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
     gpu = rank%torch.cuda.device_count()
-    #rank = rank*ngpus_per_node + gpu
+    rank = rank*ngpus_per_node + gpu
 
     '''
     # TCP init
