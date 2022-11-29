@@ -59,11 +59,11 @@ DROPOUT = 0.8
 
 from functions import train, validate, save_checkpoint
 
-def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
+def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    gpu = rank%torch.cuda.device_count()
-    rank = rank*ngpus_per_node + gpu
+    gpu = world_rank%torch.cuda.device_count()
+    rank = world_rank + gpu
 
     '''
     # TCP init
@@ -81,13 +81,13 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
         print("   GPU: ", gpu)
         print("   Ngpus_per_node: ", ngpus_per_node)
         #print("local rank: ", local_rank)
-        print("   ProcessID: ", rank)
-        print("   Current NodeID:",os.environ['SLURM_NODEID'])
+        print("   Rank: ", rank)
+        print("   Current NodeID: ",os.environ['SLURM_NODEID'] + ", " + world_rank)
         #print("world size: ", world_size)
         #print("dist url: ", dist_url)
 
     print("Can get here!!!")
-    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=ngpus_per_node * world_size,timeout=timedelta(seconds=600))
+    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=600))
     print("But cannot get here???")
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
@@ -188,7 +188,8 @@ if __name__ == "__main__":
         pprint.pprint(dict(env_var), width = 1)
 
     #get slurm parameter
-    rank = int(os.environ["SLURM_PROCID"])
+    node_id = int(os.environ["SLURM_NODEID"])
+    world_rank = int(os.environ["SLURM_PROCID"])
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
@@ -198,13 +199,13 @@ if __name__ == "__main__":
     dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
 
     if debug:
-        print("dist-url:{} at PROCID {} / {}".format(dist_url, rank, world_size))
+        print("dist-url:{} at PROCID {} / {}".format(dist_url, world_rank, world_size))
 
     if debug:
         print("In local machine, before spawn():")
-        print("local_rank: ", rank)
+        print("world_rank: ", world_rank)
         print("world size: ", world_size)
         print("ngpus per node: ", ngpus_per_node)
-        print("job id: ", job_id)
-    context = mp.spawn(model_init, args=(ngpus_per_node,rank,dist_url,world_size), nprocs=ngpus_per_node,join=False)
+        print("node id: ", node_id)
+    context = mp.spawn(model_init, args=(ngpus_per_node,node_id,dist_url,world_size), nprocs=ngpus_per_node,join=False)
     context.join(10)
