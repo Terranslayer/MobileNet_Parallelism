@@ -62,7 +62,6 @@ from functions import train, validate, save_checkpoint
 def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    gpu = world_rank%torch.cuda.device_count()
     rank = world_rank + gpu
 
     '''
@@ -79,7 +78,7 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     if debug:
         print("Inside Model Init:")
         print("   GPU: ", gpu)
-        print("   Ngpus_per_node: ", ngpus_per_node)
+        # print("   Ngpus_per_node: ", ngpus_per_node)
         #print("local rank: ", local_rank)
         print("   Rank: ", rank)
         print("   Current NodeID: ",world_rank)
@@ -170,7 +169,7 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     end = time.time()
     t_time = end - start
     print("The Elapsed Time is: ", t_time)
-    #dist.destroy_process_group()
+    dist.destroy_process_group()
 
 def adjust_learning_rate(optimizer, epoch, lr):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
