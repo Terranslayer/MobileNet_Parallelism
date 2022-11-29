@@ -13,6 +13,7 @@ import os
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
+from datetime import timedelta
 
 # dataset settings
 batch_size = 256
@@ -61,6 +62,7 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
     rank = rank
+    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
 
     '''
     # TCP init
@@ -83,7 +85,7 @@ def model_init(gpu,ngpus_per_node,rank,dist_url,world_size):
         #print("dist url: ", dist_url)
 
     # print("Can get here!!!")
-    dist.init_process_group(backend='nccl', init_method=dist_url,rank=gpu,world_size=2)
+    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
     # print("But cannot get here???")
     # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
@@ -186,6 +188,7 @@ if __name__ == "__main__":
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
+    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
 
     #create dist train file
     dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
