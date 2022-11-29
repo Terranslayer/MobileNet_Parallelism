@@ -31,6 +31,13 @@ IM_SIZE = 224  # resize image
 NORMALIZE = ([0.485, 0.456, 0.406],
              [0.229, 0.224, 0.225])
 evaluate = False
+'''
+set backend to "nccl" to get the best performance, but this will result hang if n_nodes != n_gpus in case HPC
+set backendd to gloo can run the program when n_nodes != n_gpus, however this method will randomly select 
+used ports which will result in connection refused error, so you may need to try several times to get a succesful
+run. This is about due to gloo's low level communication code, so I cannot do much with it
+'''
+backend = "nccl"
 
 
 train_transformer = transforms.Compose([
@@ -86,7 +93,7 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
         #print("dist url: ", dist_url)
 
     # print("Can get here!!!")
-    dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
+    dist.init_process_group(backend=backend, init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
     # print("But cannot get here???")
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
