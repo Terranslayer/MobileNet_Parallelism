@@ -62,7 +62,7 @@ from functions import train, validate, save_checkpoint
 def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     global best_acc1
     # print("Get here!")
-    rank = world_rank + gpu
+    rank = world_rank * ngpus_per_node + gpu
 
     '''
     # TCP init
@@ -88,7 +88,6 @@ def model_init(gpu,ngpus_per_node,world_rank,dist_url,world_size):
     print("Can get here!!!")
     dist.init_process_group(backend='nccl', init_method=dist_url,rank=rank,world_size=world_size,timeout=timedelta(seconds=60))
     print("But cannot get here???")
-    # setup(rank,nprocs)
     splited_batch_size = int(batch_size/ngpus_per_node) #seperate batch size according to N of processors
     train_subset, val_subset = random_split(cifar, [0.75, 0.25]) #split dataset into train & test
     # apply corespond transformer to train & test dataset, apply sampler, create dataloder
@@ -188,7 +187,7 @@ if __name__ == "__main__":
 
     #get slurm parameter
     node_id = int(os.environ["SLURM_NODEID"])
-    world_rank = int(os.environ["SLURM_PROCID"])
+    w_rank = int(os.environ["SLURM_PROCID"])
     world_size = int(os.environ["SLURM_NPROCS"])
     ngpus_per_node = torch.cuda.device_count()
     job_id = os.environ["SLURM_JOBID"]
@@ -198,11 +197,11 @@ if __name__ == "__main__":
     dist_url = "file://{}.{}".format(os.path.realpath(dist_file), job_id)
 
     if debug:
-        print("dist-url:{} at PROCID {} / {}".format(dist_url, world_rank, world_size))
+        print("dist-url:{} at PROCID {} / {}".format(dist_url, w_rank, world_size))
 
     if debug:
         print("In local machine, before spawn():")
-        print("world_rank: ", world_rank)
+        print("world_rank: ", w_rank)
         print("world size: ", world_size)
         print("ngpus per node: ", ngpus_per_node)
         print("node id: ", node_id)
